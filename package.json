@@ -1,0 +1,17 @@
+{
+  "name": "gosha-validate",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Neoniklain/gosha-validate.git"
+  },
+  "author": "Vitaliy Vashenko",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Neoniklain/gosha-validate/issues"
+  },
+  "homepage": "https://github.com/Neoniklain/gosha-validate#readme"
+}
