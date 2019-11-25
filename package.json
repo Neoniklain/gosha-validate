@@ -2,8 +2,12 @@
   "name": "gosha-validate",
   "version": "1.0.0",
   "description": "",
+  "module": "commonjs",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "mocha -r esm tests/test.js",
+    "test2": "mocha -r esm tests/test2.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Neoniklain/gosha-validate.git"
@@ -13,5 +17,12 @@
   "bugs": {
     "url": "https://github.com/Neoniklain/gosha-validate/issues"
   },
-  "homepage": "https://github.com/Neoniklain/gosha-validate#readme"
+  "homepage": "https://github.com/Neoniklain/gosha-validate#readme",
+  "devDependencies": {
+    "babel-preset-es2015": "^6.24.1",
+    "mocha": "^6.2.2"
+  },
+  "dependencies": {
+    "esm": "^3.2.25"
+  }
 }
