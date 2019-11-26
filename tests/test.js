@@ -417,9 +417,9 @@ describe('Минимум максимум', function () {
 
 describe('Регулярные выражения', function () {
 
-  it('Минимум для Number', function () {
+  it('Регулярные выражение для String', function () {
     let validateModel = setRule('Name', [
-      {regexp: /^A/, message: 'Field is 10 minimum'},
+      {regexp: /^A/, message: 'Field must satisfy regex'},
     ]);
     validateModel.model.Name = 'an A';
     let result = validateModel.validate();
