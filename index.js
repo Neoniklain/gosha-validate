@@ -80,6 +80,12 @@ export function ValidationItem(model) {
 
   };
 
+  this.setRules = function (rules) {
+    for (let rule of rules) {
+      this.setRule(rule.field, rule.rules);
+    }
+  };
+
   this.validate = function () {
     let result = new ValidateResult();
     for (let ruleObject of this.rules) {
@@ -141,7 +147,6 @@ export function ValidationItem(model) {
       }
 
       if (ruleObject.rule.regexp) {
-        console.log(this.model[ruleObject.field].search(ruleObject.rule.regexp));
         if (this.model[ruleObject.field].search(ruleObject.rule.regexp) === -1) {
           $_AddError(result, ruleObject);
         }

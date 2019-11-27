@@ -343,7 +343,6 @@ describe('Минимум максимум', function () {
     result = validateModel.validate();
     assert.equal(result.success, true);
 
-
     validateModel.model.Markers = ['', '', '', ''];
     result = validateModel.validate();
     assert.equal(result.success, true);
@@ -364,7 +363,6 @@ describe('Минимум максимум', function () {
     validateModel.model.Markers = ['', '', ''];
     result = validateModel.validate();
     assert.equal(result.success, true);
-
 
     validateModel.model.Markers = ['', '', '', ''];
     result = validateModel.validate();
@@ -428,6 +426,35 @@ describe('Регулярные выражения', function () {
     validateModel.model.Name = 'An E';
     result = validateModel.validate();
     assert.equal(result.success, true);
+  });
+
+});
+
+describe('Установка множества правил', function () {
+
+  it('Установка правил', function () {
+    let model = new Product();
+    model.Name = 'An E';
+    model.Code = 123;
+    let validateModel = goshaValidate(model);
+    validateModel.setRules([
+      {
+        field: 'Name',
+        rules: [
+          {regexp: /^A/, message: 'Field must satisfy regex'},
+          {require: true, message: 'Field is required'},
+        ]
+      },
+      {
+        field: 'Code',
+        rules: [
+          {require: true, message: 'Field is required'},
+        ]
+      }]);
+
+    let result = validateModel.validate();
+    assert.equal(result.success, true);
+
   });
 
 });
