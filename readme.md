@@ -49,11 +49,12 @@ let result = test.validate();
 ### Установка типов по дефолтным значениям из базовой модели
 
 Установит следующие правлиа соотвествия типов:
-  Code - Number;
-  Name - String;
-  Status - Boolean;
-  Markers - Array;
-  NStatus - Object;
+
+* Code - Number;
+* Name - String;
+* Status - Boolean;
+* Markers - Array;
+* NStatus - Object;
 
 ``` javascript
 let test = goshaValidate(new Product());
@@ -77,4 +78,17 @@ let result = test.validate();
 let test = goshaValidate(new Product());
 test.setRuleRequired();
 let result = test.validate("Name");
+```
+
+### Добавление пользовательских правил валидации
+
+Создание пользовательского правила валидации
+
+``` javascript
+let test = goshaValidate(new Product());
+let validateModel = goshaValidate(model);
+validateModel.setCustomRule('Name', function (value) {
+  return value === 'test';
+}, 'Поле "Name" должно быть равно "test"');
+let result = validateModel.validate();
 ```

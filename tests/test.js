@@ -590,3 +590,88 @@ describe('Валидация одного поля', function () {
   });
 
 });
+
+describe('Пользовательские правила', function () {
+
+  it('Установка правила', function () {
+
+    let model = new Product();
+    let validateModel = goshaValidate(model);
+    let exception = false;
+    try {
+      validateModel.setCustomRule('Name', function (value) {
+      });
+    } catch (e) {
+      exception = true;
+    }
+    assert.equal(exception, true);
+
+    exception = false;
+    try {
+      validateModel.setCustomRule('N1ame', function (value) {
+      });
+    } catch (e) {
+      exception = true;
+    }
+    assert.equal(exception, true);
+
+    exception = false;
+    try {
+      validateModel.setCustomRule('N1ame', function (value) {
+        return '1';
+      });
+    } catch (e) {
+      exception = true;
+    }
+    assert.equal(exception, true);
+
+    exception = false;
+    try {
+      validateModel.setCustomRule('N1ame', function (value) {
+        return value === '';
+      });
+    } catch (e) {
+      exception = true;
+    }
+    assert.equal(exception, true);
+
+    exception = false;
+    try {
+      validateModel.setCustomRule('Name', function (value) {
+        return value === '';
+      });
+    } catch (e) {
+      exception = true;
+    }
+    assert.equal(exception, false);
+  });
+
+  it('Выполнение правила', function () {
+    let model = new Product();
+    let validateModel = goshaValidate(model);
+    validateModel.setCustomRule('Name', function (value) {
+      return value === 'test';
+    });
+    let result = validateModel.validate();
+    assert.equal(result.success, false);
+
+    model.Name = 'test';
+    result = validateModel.validate();
+    assert.equal(result.success, true);
+  });
+});
+
+describe('Установка коментариев', function () {
+
+  it('Установка сообщения по умолчанию', function () {
+    let model = new Product();
+    let validateModel = goshaValidate(model);
+    validateModel.setRule('Name', [
+      {require: true, message: ''},
+    ]);
+    let result = validateModel.validate();
+    let message = result.messages[0].message;
+    assert.equal(message !== '', true);
+  });
+
+});

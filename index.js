@@ -5,15 +5,16 @@ export function goshaValidate(model) {
 export function ValidationItem(model) {
   this.model = model;
   this.rules = [];
+  this.customRules = [];
   this.fields = Object.getOwnPropertyNames(model);
 
   this.setRule = function (field, rules) {
     if (!field) {
-      console.error(`Field required.`);
+      throw `Field required.`;
     }
 
     if (!rules || rules.length === 0) {
-      console.error(`Rule required.`);
+      throw `Rule required.`;
     }
 
     let findField;
@@ -25,7 +26,7 @@ export function ValidationItem(model) {
     }
 
     if (!findField) {
-      console.error(`Not found field: ${field} in model.`);
+      throw `Not found field: ${field} in model.`;
     }
 
     for (let rule of rules) {
@@ -75,7 +76,7 @@ export function ValidationItem(model) {
         }
       }
 
-      this.rules.push({field: field, rule: rule});
+      this.rules.push({field: field, rule: rule, message: rule.message});
     }
 
   };
@@ -99,67 +100,86 @@ export function ValidationItem(model) {
     for (let ruleObject of allRules) {
 
       if (ruleObject.rule.require) {
+        let defaultRequireMessage = `Field is required`;
         if (this.model[ruleObject.field] === undefined
           || this.model[ruleObject.field] === null
           || this.model[ruleObject.field] === ''
           || (Array.isArray(this.model[ruleObject.field]) && this.model[ruleObject.field].length === 0)
           || (typeof this.model[ruleObject.field] === 'object' && Object.entries(this.model[ruleObject.field]).length === 0)) {
-          $_AddError(result, ruleObject);
+          $_AddError(result, ruleObject.field, ruleObject.message ? ruleObject.message : defaultRequireMessage);
         }
       }
 
       if (ruleObject.rule.type) {
+        let defaultTypeMessage = `Field type must be ${ruleObject.rule.type.toLowerCase()}`;
 
         if (ruleObject.rule.type.toLowerCase() === 'array') {
           if (!Array.isArray(this.model[ruleObject.field])) {
-            $_AddError(result, ruleObject);
+            $_AddError(result, ruleObject.field, ruleObject.message ? ruleObject.message : defaultTypeMessage);
           }
         }
         else {
           if (ruleObject.rule.type.toLowerCase() === 'object') {
             if (Array.isArray(this.model[ruleObject.field])) {
-              $_AddError(result, ruleObject);
+              $_AddError(result, ruleObject.field, ruleObject.message ? ruleObject.message : defaultTypeMessage);
             }
           }
           if ((typeof this.model[ruleObject.field]).toLowerCase() !== ruleObject.rule.type.toLowerCase()) {
-            $_AddError(result, ruleObject);
+            $_AddError(result, ruleObject.field, ruleObject.message ? ruleObject.message : defaultTypeMessage);
           }
         }
 
       }
 
       if (ruleObject.rule.min) {
+        let defaultMinMessage = `Field is ${ruleObject.rule.min} minimum`;
+
         if (Array.isArray(this.model[ruleObject.field]) || typeof this.model[ruleObject.field] === 'string') {
           if (this.model[ruleObject.field].length < ruleObject.rule.min) {
-            $_AddError(result, ruleObject);
+            $_AddError(result, ruleObject.field, ruleObject.message ? ruleObject.message : defaultMinMessage);
           }
         }
         else {
           if (this.model[ruleObject.field] < ruleObject.rule.min) {
-            $_AddError(result, ruleObject);
+            $_AddError(result, ruleObject.field, ruleObject.message ? ruleObject.message : defaultMinMessage);
           }
         }
       }
 
       if (ruleObject.rule.max) {
+        let defaultMaxMessage = `Field is ${ruleObject.rule.max} maximum`;
+
         if (Array.isArray(this.model[ruleObject.field]) || typeof this.model[ruleObject.field] === 'string') {
           if (this.model[ruleObject.field].length > ruleObject.rule.max) {
-            $_AddError(result, ruleObject);
+            $_AddError(result, ruleObject.field, ruleObject.message ? ruleObject.message : defaultMaxMessage);
           }
         }
         else {
           if (this.model[ruleObject.field] > ruleObject.rule.max) {
-            $_AddError(result, ruleObject);
+            $_AddError(result, ruleObject.field, ruleObject.message ? ruleObject.message : defaultMaxMessage);
           }
         }
       }
 
       if (ruleObject.rule.regexp) {
+        let defaultRegexpMessage = `Field must satisfy regex`;
+
         if (this.model[ruleObject.field].search(ruleObject.rule.regexp) === -1) {
-          $_AddError(result, ruleObject);
+          $_AddError(result, ruleObject.field, ruleObject.message ? ruleObject.message : defaultRegexpMessage);
         }
       }
     }
+
+    let customRules = this.customRules;
+    if(field) {
+      customRules = this.customRules.filter(x => x.field === field);
+    }
+    for (let ruleObject of customRules) {
+      if(!ruleObject.rule(this.model[ruleObject.field])) {
+        $_AddError(result, ruleObject.field, ruleObject.message);
+      }
+    }
+
     return result;
   };
 
@@ -211,11 +231,40 @@ export function ValidationItem(model) {
     this.setRules(rules);
   };
 
+  this.setCustomRule = function (field, rule, message) {
+    if (!field) {
+      throw(`Field required.`);
+    }
+
+    if (!rule || typeof rule !== 'function') {
+      throw `The rule must be a function.`;
+    }
+
+    if (typeof rule() !== 'boolean') {
+      throw `The rule must return a boolean value.`;
+    }
+
+    let findField;
+    for (let i = 0; i < this.fields.length; i++) {
+      if (this.fields[i] === field) {
+        findField = field;
+        break;
+      }
+    }
+
+    if (!findField) {
+      throw `Not found field: ${field} in model.`;
+    }
+
+    this.customRules.push({field: field, rule: rule, message: message})
+
+  };
+
 }
 
-function $_AddError(result, ruleObject) {
+function $_AddError(result, field, message) {
   result.success = false;
-  result.messages.push({field: ruleObject.field, message: ruleObject.rule.message});
+  result.messages.push({field: field, message: message});
   return result;
 }
 
