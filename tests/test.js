@@ -7,6 +7,8 @@ function Product() {
   this.Status = false;
   this.Markers = [];
   this.NStatus = {};
+  this.NullField = null;
+  this.UndefinedField = undefined;
   return this;
 }
 
@@ -455,6 +457,136 @@ describe('Установка множества правил', function () {
     let result = validateModel.validate();
     assert.equal(result.success, true);
 
+  });
+
+  it('Установка типов из модели по умолчанию', function () {
+    let model = new Product();
+    let validateModel = goshaValidate(model);
+    let exception = false;
+    try {
+      validateModel.setRuleTypeFromDefault();
+    } catch (e) {
+      exception = true;
+    }
+    assert.equal(exception, true);
+
+    validateModel.setRuleTypeFromDefault(true);
+    let result = validateModel.validate();
+    assert.equal(result.success, true);
+  });
+
+  it('Установка обязательности для набора полей', function () {
+    let model = new Product();
+    let validateModel = goshaValidate(model);
+    let exception = false;
+    try {
+      validateModel.setRuleRequired(['N1ame']);
+    } catch (e) {
+      exception = true;
+    }
+    assert.equal(exception, true);
+
+    exception = false;
+    try {
+      validateModel.setRuleRequired(123);
+    } catch (e) {
+      exception = true;
+    }
+    assert.equal(exception, true);
+
+    validateModel.setRuleRequired(['Code', 'Name', 'Status', 'Markers', 'NStatus']);
+    let result = validateModel.validate();
+    assert.equal(result.success, false);
+
+    model.Name = '123';
+    model.Code = 123;
+    model.Status = 123;
+    model.Markers = ['123', '222'];
+    model.NStatus = {field: '123'};
+    result = validateModel.validate();
+    assert.equal(result.success, true);
+  });
+
+});
+
+describe('Валидация одного поля', function () {
+
+  it('Валидация String', function () {
+    let validateModel = setRule('Name', [
+      {require: true, message: 'Field is required'},
+    ]);
+    let result = validateModel.validate('Name');
+    assert.equal(result.success, false);
+    assert.equal(result.messages[0].message, 'Field is required');
+
+    validateModel.model.Name = '123';
+    result = validateModel.validate('Name');
+    assert.equal(result.success, true);
+  });
+
+  it('Валидация Number', function () {
+    let validateModel = setRule('Code', [
+      {require: true, message: 'Field is required'},
+    ]);
+    validateModel.model.Code = '';
+    let result = validateModel.validate('Code');
+    assert.equal(result.success, false);
+
+    validateModel.model.Code = 123;
+    result = validateModel.validate('Code');
+    assert.equal(result.success, true);
+  });
+
+  it('Валидация для Array', function () {
+    let validateModel = setRule('Markers', [
+      {min: 3, message: 'Field is 10 maximum'},
+    ]);
+    validateModel.model.Markers = [];
+    let result = validateModel.validate('Markers');
+    assert.equal(result.success, false);
+
+    validateModel.model.Markers = ['', ''];
+    result = validateModel.validate('Markers');
+    assert.equal(result.success, false);
+
+    validateModel.model.Markers = ['', '', ''];
+    result = validateModel.validate('Markers');
+    assert.equal(result.success, true);
+
+    validateModel.model.Markers = ['', '', '', ''];
+    result = validateModel.validate('Markers');
+    assert.equal(result.success, true);
+  });
+
+  it('Валидация для Boolean', function () {
+    let validateModel = setRule('Status', [
+      {require: true, message: 'Field is required'},
+    ]);
+    validateModel.model.Status = '';
+    let result = validateModel.validate('Status');
+    assert.equal(result.success, false);
+    assert.equal(result.messages[0].message, 'Field is required');
+
+    validateModel.model.Status = true;
+    result = validateModel.validate('Status');
+    assert.equal(result.success, true);
+
+    validateModel.model.Status = false;
+    result = validateModel.validate('Status');
+    assert.equal(result.success, true);
+  });
+
+  it('Валидация для Object', function () {
+    let validateModel = setRule('NStatus', [
+      {require: true, message: 'Field is required'},
+    ]);
+    let result = validateModel.validate('NStatus');
+    assert.equal(result.success, false);
+    assert.equal(result.messages[0].message, 'Field is required');
+
+    validateModel.model.NStatus = {test: true};
+    result = validateModel.validate('NStatus');
+    assert.equal(result.success, true);
   });
 
 });

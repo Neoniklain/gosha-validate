@@ -54,7 +54,7 @@ export function ValidationItem(model) {
           throw 'Rule of minimum must be a Number type';
         }
         if (typeof this.model[field] !== 'number' && !Array.isArray(this.model[field])
-        && typeof this.model[field] !== 'string') {
+          && typeof this.model[field] !== 'string') {
           throw 'Rule of minimum must be applied only for Number or Array field';
         }
       }
@@ -86,9 +86,17 @@ export function ValidationItem(model) {
     }
   };
 
-  this.validate = function () {
+  this.validate = function (field) {
     let result = new ValidateResult();
-    for (let ruleObject of this.rules) {
+    let allRules = this.rules;
+    if(field) {
+      let findField = this.fields.find(x => x === field);
+      if(!findField) {
+        throw `Not found field "${field}"`;
+      }
+      allRules = this.rules.filter(x => x.field === field);
+    }
+    for (let ruleObject of allRules) {
 
       if (ruleObject.rule.require) {
         if (this.model[ruleObject.field] === undefined
@@ -154,6 +162,55 @@ export function ValidationItem(model) {
     }
     return result;
   };
+
+  this.setRuleTypeFromDefault = function (ignoreNullable) {
+    let rules = [];
+    for (let field of this.fields) {
+      if (this.model[field] === null || this.model[field] === undefined) {
+        if (ignoreNullable) {
+          continue;
+        }
+        else {
+          throw 'In base model exist null or undefined field. Rules not set. Add ignoreNullable flag for setTypeRuleFromDefault function.';
+        }
+      }
+      let type = typeof this.model[field];
+      if (type === 'object') {
+        if (Array.isArray(this.model[field])) {
+          type = 'array';
+        }
+      }
+      rules.push({
+        field: field,
+        rules: [
+          {type: type, message: `Field ${field} must be ${typeof this.model[field]} type`}
+        ]
+      });
+    }
+    this.setRules(rules);
+  };
+
+  this.setRuleRequired = function (fields) {
+    if(!fields) fields = this.fields;
+    if(!Array.isArray(fields)) {
+      throw 'Exception fields parameter gonna be Array of String'
+    }
+    let rules = [];
+    for (let field of fields) {
+      let findField = this.fields.find(x => x === field);
+      if(!findField) {
+        throw `Not found field "${field}"`;
+      }
+      rules.push({
+        field: field,
+        rules: [
+          {require: true, message: `Field ${field} must be require`}
+        ]
+      });
+    }
+    this.setRules(rules);
+  };
+
 }
 
 function $_AddError(result, ruleObject) {
