@@ -92,3 +92,28 @@ validateModel.setCustomRule('Name', function (value) {
 }, 'Поле "Name" должно быть равно "test"');
 let result = validateModel.validate();
 ```
+
+### Удаление правил
+
+Удаление всех правил для поля
+
+``` javascript
+let test = goshaValidate(new Product());
+validateModel.setRule('Name', [
+      {require: true, message: ''},
+    ]);
+validateModel.removeRule('Name');
+let result = validateModel.validate();
+```
+
+Удаление определенных правил для поля. Код ниже удалит правила 'require' и 'type'
+
+``` javascript
+let test = goshaValidate(new Product());
+validateModel.setRule('Name', [
+      {require: true, message: ''},
+      {type: String, message: ''},
+    ]);
+validateModel.removeRule('Name', ['require', 'type']);
+let result = validateModel.validate();
+```

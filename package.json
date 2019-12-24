@@ -1,6 +1,6 @@
 {
   "name": "gosha-validate",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "",
   "module": "commonjs",
   "main": "index.js",

@@ -675,3 +675,42 @@ describe('Установка коментариев', function () {
   });
 
 });
+
+describe('Удаление правил', function () {
+
+  it('Удаление правила для поля', function () {
+    let model = new Product();
+    let validateModel = goshaValidate(model);
+    validateModel.setRule('Name', [
+      {require: true, message: ''},
+    ]);
+    validateModel.setRule('Name', [
+      {type: 'String', message: ''},
+    ]);
+    let result = validateModel.validate();
+    let message = result.success;
+    assert.equal(message, false);
+    validateModel.removeRule('Name');
+    result = validateModel.validate();
+    message = result.success;
+    assert.equal(message, true);
+  });
+
+  it('Удаление правила для поля и типа правила', function () {
+    let model = new Product();
+    let validateModel = goshaValidate(model);
+    validateModel.setRule('Name', [
+      {require: true, message: ''},
+    ]);
+    validateModel.setRule('Name', [
+      {type: 'String', message: ''},
+    ]);
+    let result = validateModel.validate();
+    let message = result.success;
+    assert.equal(message, false);
+    validateModel.removeRule('Name', ['require']);
+    result = validateModel.validate();
+    assert.equal(result.messages.length === 1, true);
+  });
+
+});

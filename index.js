@@ -31,6 +31,19 @@ export function ValidationItem(model) {
 
     for (let rule of rules) {
 
+      if (this.rules.find(x =>
+        x.field === field
+        &&
+        (
+          !!x.rule.require && rule.require
+          || !!x.rule.type && rule.type
+          || !!x.rule.min && rule.min
+          || !!x.rule.max && rule.max
+        )
+      )) {
+        throw('Rule already exist');
+      }
+
       if (rule.require) {
         if (typeof rule.require !== 'boolean') {
           throw 'Field must be a Boolean type';
@@ -76,7 +89,7 @@ export function ValidationItem(model) {
         }
       }
 
-      this.rules.push({field: field, rule: rule, message: rule.message});
+      this.rules.push({field: field, rule: rule});
     }
 
   };
@@ -87,12 +100,30 @@ export function ValidationItem(model) {
     }
   };
 
+  this.removeRule = function (fieldName, types) {
+    if (!types) {
+      this.rules = this.rules.filter(x => x.field !== fieldName);
+    }
+    else {
+      this.rules = this.rules.filter(x =>
+        x.field === fieldName
+        &&
+        (
+          !!x.rule.require && types.find(x => x === 'require')
+          || !!x.rule.type && types.find(x => x === 'type')
+          || !!x.rule.min && types.find(x => x === 'min')
+          || !!x.rule.max && types.find(x => x === 'max')
+        )
+      );
+    }
+  };
+
   this.validate = function (field) {
     let result = new ValidateResult();
     let allRules = this.rules;
-    if(field) {
+    if (field) {
       let findField = this.fields.find(x => x === field);
-      if(!findField) {
+      if (!findField) {
         throw `Not found field "${field}"`;
       }
       allRules = this.rules.filter(x => x.field === field);
@@ -106,7 +137,7 @@ export function ValidationItem(model) {
           || this.model[ruleObject.field] === ''
           || (Array.isArray(this.model[ruleObject.field]) && this.model[ruleObject.field].length === 0)
           || (typeof this.model[ruleObject.field] === 'object' && Object.entries(this.model[ruleObject.field]).length === 0)) {
-          $_AddError(result, ruleObject.field, ruleObject.message ? ruleObject.message : defaultRequireMessage);
+          $_AddError(result, ruleObject.field, ruleObject.rule.message ? ruleObject.rule.message : defaultRequireMessage);
         }
       }
 
@@ -115,17 +146,17 @@ export function ValidationItem(model) {
 
         if (ruleObject.rule.type.toLowerCase() === 'array') {
           if (!Array.isArray(this.model[ruleObject.field])) {
-            $_AddError(result, ruleObject.field, ruleObject.message ? ruleObject.message : defaultTypeMessage);
+            $_AddError(result, ruleObject.field, ruleObject.rule.message ? ruleObject.rule.message : defaultTypeMessage);
           }
         }
         else {
           if (ruleObject.rule.type.toLowerCase() === 'object') {
             if (Array.isArray(this.model[ruleObject.field])) {
-              $_AddError(result, ruleObject.field, ruleObject.message ? ruleObject.message : defaultTypeMessage);
+              $_AddError(result, ruleObject.field, ruleObject.rule.message ? ruleObject.rule.message : defaultTypeMessage);
             }
           }
           if ((typeof this.model[ruleObject.field]).toLowerCase() !== ruleObject.rule.type.toLowerCase()) {
-            $_AddError(result, ruleObject.field, ruleObject.message ? ruleObject.message : defaultTypeMessage);
+            $_AddError(result, ruleObject.field, ruleObject.rule.message ? ruleObject.rule.message : defaultTypeMessage);
           }
         }
 
@@ -136,12 +167,12 @@ export function ValidationItem(model) {
 
         if (Array.isArray(this.model[ruleObject.field]) || typeof this.model[ruleObject.field] === 'string') {
           if (this.model[ruleObject.field].length < ruleObject.rule.min) {
-            $_AddError(result, ruleObject.field, ruleObject.message ? ruleObject.message : defaultMinMessage);
+            $_AddError(result, ruleObject.field, ruleObject.rule.message ? ruleObject.rule.message : defaultMinMessage);
           }
         }
         else {
           if (this.model[ruleObject.field] < ruleObject.rule.min) {
-            $_AddError(result, ruleObject.field, ruleObject.message ? ruleObject.message : defaultMinMessage);
+            $_AddError(result, ruleObject.field, ruleObject.rule.message ? ruleObject.rule.message : defaultMinMessage);
           }
         }
       }
@@ -151,12 +182,12 @@ export function ValidationItem(model) {
 
         if (Array.isArray(this.model[ruleObject.field]) || typeof this.model[ruleObject.field] === 'string') {
           if (this.model[ruleObject.field].length > ruleObject.rule.max) {
-            $_AddError(result, ruleObject.field, ruleObject.message ? ruleObject.message : defaultMaxMessage);
+            $_AddError(result, ruleObject.field, ruleObject.rule.message ? ruleObject.rule.message : defaultMaxMessage);
           }
         }
         else {
           if (this.model[ruleObject.field] > ruleObject.rule.max) {
-            $_AddError(result, ruleObject.field, ruleObject.message ? ruleObject.message : defaultMaxMessage);
+            $_AddError(result, ruleObject.field, ruleObject.rule.message ? ruleObject.rule.message : defaultMaxMessage);
           }
         }
       }
@@ -165,18 +196,18 @@ export function ValidationItem(model) {
         let defaultRegexpMessage = `Field must satisfy regex`;
 
         if (this.model[ruleObject.field].search(ruleObject.rule.regexp) === -1) {
-          $_AddError(result, ruleObject.field, ruleObject.message ? ruleObject.message : defaultRegexpMessage);
+          $_AddError(result, ruleObject.field, ruleObject.rule.message ? ruleObject.rule.message : defaultRegexpMessage);
         }
       }
     }
 
     let customRules = this.customRules;
-    if(field) {
+    if (field) {
       customRules = this.customRules.filter(x => x.field === field);
     }
     for (let ruleObject of customRules) {
-      if(!ruleObject.rule(this.model[ruleObject.field])) {
-        $_AddError(result, ruleObject.field, ruleObject.message);
+      if (!ruleObject.rule(this.model[ruleObject.field])) {
+        $_AddError(result, ruleObject.field, ruleObject.rule.message);
       }
     }
 
@@ -211,14 +242,16 @@ export function ValidationItem(model) {
   };
 
   this.setRuleRequired = function (fields) {
-    if(!fields) fields = this.fields;
-    if(!Array.isArray(fields)) {
-      throw 'Exception fields parameter gonna be Array of String'
+    if (!fields) {
+      fields = this.fields;
+    }
+    if (!Array.isArray(fields)) {
+      throw 'Exception fields parameter gonna be Array of String';
     }
     let rules = [];
     for (let field of fields) {
       let findField = this.fields.find(x => x === field);
-      if(!findField) {
+      if (!findField) {
         throw `Not found field "${field}"`;
       }
       rules.push({
@@ -256,7 +289,7 @@ export function ValidationItem(model) {
       throw `Not found field: ${field} in model.`;
     }
 
-    this.customRules.push({field: field, rule: rule, message: message})
+    this.customRules.push({field: field, rule: rule, message: message});
 
   };
 
